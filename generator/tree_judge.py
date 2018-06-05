@@ -56,16 +56,19 @@ class FloorplanEvaluator(object):
 
 class PopulationCentrifuge(object):
 
-    def __init__(self, width, height, weights):
+    def __init__(self, width, height, weights, num_generations = 5, inner_iter = 10, door_iter = 200):
         self.width = width
         self.height = height
         self.weights = weights
+        self.num_generations = num_generations
+        self.inner_iter = inner_iter
+        self.door_iter = door_iter
 
     def dump_plan(self, fp, door_vector, generation_num, list_o_rooms, width, height, rootnode):
         fp.clear_doors()
         fp.add_doors(door_vector)
 
-        filename = f"out/floorplan-{generation_num}"
+        filename = "out/floorplan-{}".format(generation_num)
         save_floorplan(FloorplanDNA(
                 list_o_rooms=list_o_rooms,
                 width=width,
@@ -76,7 +79,10 @@ class PopulationCentrifuge(object):
             fp,
             filename,
         )
-        renderer.svgrenderer.SvgRenderer(fp, width, height).render(filename + '.svg', show_edge_connections=False)
+        print("Dumping plan to ", filename)
+        ren = renderer.svgrenderer.SvgRenderer(fp, width, height);
+        ren.render(filename + '.svg')
+
 
     def create_perfect_floorplan(self):
         max_score = float('-inf')
@@ -86,8 +92,8 @@ class PopulationCentrifuge(object):
         height = self.height
         weights = self.weights
 
-        for generation in range(100):
-            print("We are evaluating population ", generation)
+        for generation in range(self.num_generations):
+            print("  -> Evaluating generation ", generation)
 
             # list_o_rooms = [LivingGroom(4), DiningGroom(2.5), KitchenGroom(2), BedGroom(1.9)]
             # list_o_rooms = []
@@ -120,10 +126,10 @@ class PopulationCentrifuge(object):
 
             duplicate_score = 0
             max_score = 0
-            for i in range(500):
+            for i in range(self.inner_iter):
                 salt.run_generation()
                 import statistics
-                print(f"The best score so far is {max([tree.score for tree in salt.population])}")
+                print("Inner iteration {} -- best score so far is {}".format(i,max([tree.score for tree in salt.population])))
 
                 fp = instantiator.generate_candidate_floorplan(salt.population[0])
 
@@ -144,7 +150,7 @@ class PopulationCentrifuge(object):
                     max_score = composite_score
 
             shaker = GeneticDoorShaker(fp, [ RandomDoorGenerator.create_door_vector(len(fp.edges)) for i in range(20)])
-            for j in range(200):
+            for j in range(self.door_iter):
                 shaker.run_generation()
             door_vector = shaker.population[0].vector
 
@@ -162,10 +168,16 @@ class PopulationCentrifuge(object):
 
         print("Max score was", max_score)
 
+        # olga: vector below will always be None, because loop above (line #144) always exits with
+        # best plan[1] = None. So rerun the door shaker again.
         fp, vector = best_plan
+
+        shaker = GeneticDoorShaker(fp, [ RandomDoorGenerator.create_door_vector(len(fp.edges)) for i in range(20)])
+        for j in range(200):
+            shaker.run_generation()
+        vector = shaker.population[0].vector
+
         fp.clear_doors()
         fp.add_doors(vector)
 
         return fp
-
-

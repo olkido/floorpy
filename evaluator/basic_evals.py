@@ -83,7 +83,7 @@ class LowMeanAreaPerimeterRatio(object):
         median_ap = statistics.median([room.area / room.perimeter for room in floorplan.rooms])
 
         if median_ap < self.ap_ratio_threshold:
-            print(f"Failed on Median AP is too low {median_ap}")
+            print("Failed on Median AP is too low {}".format(median_ap))
             return 0
         else:
             return 1
@@ -125,4 +125,3 @@ class HighTravelCostBetweenRoomsFilter(object):
             return 1
         else:
             return 0
-

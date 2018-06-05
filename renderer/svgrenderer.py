@@ -5,14 +5,25 @@ import numpy as np
 from generator.groom import HallwayGroom
 from core.opening import Door, DoorFactory
 
+class RenderingParams(object):
+    def __init__(self, scaling=16, room_stroke_width=12, door_stroke_width_hinge_latch=12, door_stroke_width_hinge_endpoint=4, door_stroke_width_arc=2):
+        self.scaling = scaling
+        self.room_stroke_width = room_stroke_width # room wall stroke width
+        self.door_stroke_width_hinge_latch = door_stroke_width_hinge_latch
+        self.door_stroke_width_hinge_endpoint = door_stroke_width_hinge_endpoint
+        self.door_stroke_width_arc = door_stroke_width_arc
+
+from exporter.roomexporter import RoomExporter
+
 class SvgRenderer(object):
 
-    def __init__(self, floorplan,width, height, scaling=16):
+    def __init__(self, floorplan, width, height, rparams=RenderingParams()):
+        self.rparams = rparams
         self.floorplan = floorplan
-        self.drawing = svgwrite.Drawing('out/output.svg', size=(width * scaling + 64, height * scaling + 64))
+        self.drawing = svgwrite.Drawing('out/output.svg', size=(width * rparams.scaling + 64, height * rparams.scaling + 64))
         self.group = svgwrite.container.Group(transform='translate(32,32)')
         self.drawing.add(self.group)
-        self.scaling = scaling
+        self.exporter = RoomExporter(floorplan, self.rparams)
 
     def render(self, filename, show_edge_connections=False):
         print("We are outputting svg to ", filename)
@@ -39,6 +50,7 @@ class SvgRenderer(object):
 
         self.drawing.saveas(filename, pretty=True)
 
+
     def render_room_fill(self, room):
         x_max, x_min, y_max, y_min = room.max_min_xy
         self.group.add(
@@ -48,7 +60,7 @@ class SvgRenderer(object):
         )
 
     def scale_point(self, p):
-        return p[0]*self.scaling, p[1]*self.scaling
+        return p[0]*self.rparams.scaling, p[1]*self.rparams.scaling
 
     def denumpy_point(self, p):
         return p[0]*1.0, p[1]*1.0
@@ -57,11 +69,16 @@ class SvgRenderer(object):
         p0, p1 = [self.scale_point(p) for p in edge.cartesian_points]
         self.group.add(self.drawing.line(p0, p1, **{
             "stroke": "#595959",
-            "stroke-width": 12,
+            "stroke-width": self.rparams.room_stroke_width,
             "stroke-linecap": "round"
         }))
         for door in edge.doors:
             self.render_door(edge, door)
+            # debug - plot the door points on the arc
+            hinge, latch, endpoint, points_arc = self.exporter.export_door_points(edge,door)
+            for point in points_arc:
+                self.mark_point(point, color=svgwrite.rgb(255, 255, 0))
+
         # self.render_door(edge, DoorFactory.interior_door(0.5, -1))
 
     def render_room_label(self, room):
@@ -72,9 +89,10 @@ class SvgRenderer(object):
         self.group.add(
             self.drawing.text(label, x=[x], y=[y], **{
                 "text-anchor": "middle",
-                "style": f"font-family: 'Source Code Pro'; font-size: {fontsize}pt",
+                "style": "font-family: 'Source Code Pro'; font-size: {}pt".format(fontsize),
             })
         )
+
 
     def render_door(self, edge, door):
         a, b = edge.radial_points(door.t, door.width * 0.5)
@@ -90,10 +108,14 @@ class SvgRenderer(object):
         latch = self.scale_point(latch)
         endpoint = self.scale_point(endpoint)
 
+        self.mark_point(point=hinge,    color=svgwrite.rgb(255, 0, 0))
+        self.mark_point(point=latch,    color=svgwrite.rgb(0, 255, 0))
+        self.mark_point(point=endpoint, color=svgwrite.rgb(0, 0, 255))
+
         self.group.add(
             self.drawing.line(hinge, latch, **{
                 "stroke": "white",
-                "stroke-width": 12
+                "stroke-width": self.rparams.door_stroke_width_hinge_latch
             })
         )
         # # self.mark_point(self.scale_point(hinge), 'yellowgreen', radius=16)
@@ -104,17 +126,17 @@ class SvgRenderer(object):
         self.group.add(
             self.drawing.line(hinge, endpoint, **{
                 "stroke": svgwrite.rgb(0, 0, 0),
-                "stroke-width": 4,
+                "stroke-width": self.rparams.door_stroke_width_hinge_endpoint,
             })
         )
 
         path = self.drawing.path(**{
             "fill": "none",
             "stroke": "black",
-            "stroke-width": 2,
+            "stroke-width": self.rparams.door_stroke_width_arc,
         })
-        path.push(f"M{latch[0]} {latch[1]}")
-        path.push_arc(endpoint, -1, door.width * self.scaling, large_arc=False, angle_dir=angle_dir, absolute=True)
+        path.push("M{} {}".format(latch[0],latch[1]))
+        path.push_arc(endpoint, -1, door.width * self.rparams.scaling, large_arc=False, angle_dir=angle_dir, absolute=True)
         self.group.add(path)
 
 

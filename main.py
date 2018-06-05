@@ -1,4 +1,5 @@
 import renderer.svgrenderer
+import exporter.roomexporter
 from core.room import RoomFactory, Room
 from core.floorplan import FloorPlan
 from core.edge import Orientation, Edge
@@ -23,8 +24,12 @@ def garbage_fire():
 
     weights = TreeWeights(**default_tree_weights)
     fp = PopulationCentrifuge(120, 80, weights).create_perfect_floorplan()
-    # renderer.svgrenderer.SvgRenderer(fp, 100, 60).render('out/output.svg')
-
+    renderer.svgrenderer.SvgRenderer(fp, 100, 60).render('out/output.svg')
+    lines, labels = exporter.roomexporter.RoomExporter(fp).export_lines()
+    print('-- Lines -- ')
+    print(lines)
+    print('-- Labels -- ')
+    print(labels)
 
 def get_floorplan(unfixed_filename):
     dna = load_floorplan("." + unfixed_filename.replace(".svg", ""))
@@ -68,4 +73,3 @@ if __name__ == "__main__":
     # main()
     garbage_fire()
     # autofrob_tree_evaluator_weights()
-

@@ -53,14 +53,16 @@ class GeneticTreeShaker(object):
         self.population = self.population[:self.population_size]
 
     def score_candidates(self, candidates):
-        with Pool(11) as p:
-            scores = p.map(self.score_candidate_subprocess, candidates)
-            for candidate, score in zip(candidates, scores):
-                candidate.score = score
+        # olga: the following will not work.
+        # https://stackoverflow.com/questions/3288595/multiprocessing-how-to-use-pool-map-on-a-function-defined-in-a-class
+        # with Pool(11) as p:
+        #     scores = p.map(self.score_candidate_subprocess, candidates)
+        #     for candidate, score in zip(candidates, scores):
+        #         candidate.score = score
 
-        # for candidate in candidates:
-        #     fp = self.fp_instantiator.generate_candidate_floorplan(candidate)
-        #     candidate.score = self.fp_evaluator.score_floorplan(fp)
+        for candidate in candidates:
+            fp = self.fp_instantiator.generate_candidate_floorplan(candidate)
+            candidate.score = self.fp_evaluator.score_floorplan(fp)
 
     def score_candidate_subprocess(self, candidate):
         fp = self.fp_instantiator.generate_candidate_floorplan(candidate)
@@ -136,4 +138,3 @@ def weighted_choice(choices):
             return c
         upto += w
     assert False, "Shouldn't get here"
-

@@ -103,3 +103,4 @@ ENV/
 .mypy_cache/
 cherries
 the_real_out
+*.DS_Store

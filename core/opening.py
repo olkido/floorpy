@@ -11,7 +11,8 @@ class AbstractEdgeOpening(object):
 class Door(AbstractEdgeOpening):
 
     def __init__(self, t, width, opens_into, opens_LR):
-        super().__init__(t, width, opens_into)
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(Door,self).__init__(t, width, opens_into)
         self.opens_LR = opens_LR
 
 

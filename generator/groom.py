@@ -55,7 +55,8 @@ class Groom(object):
 class JiltedGroom(Groom):
 
     def __init__(self):
-        super().__init__(0, "Jilted :(")
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(JiltedGroom,self).__init__(0, "Jilted :(")
 
     def tree_score(self, actual_room, weights):
         return 0.0
@@ -67,7 +68,8 @@ class JiltedGroom(Groom):
 class LivingGroom(Groom):
 
     def __init__(self, area, label=None):
-        super().__init__(area, label or "Living")
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(LivingGroom,self).__init__(area, label or "Living")
         self.fill_color = "fce5cd"
 
     def tree_weight(self, weights):
@@ -84,7 +86,8 @@ class LivingGroom(Groom):
 class DiningGroom(LivingGroom):
 
     def __init__(self, area):
-        super().__init__(area, label="Dining")
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(DiningGroom,self).__init__(area, label="Dining")
         self.fill_color = "e6b8af"
 
     def tree_weight(self, weights):
@@ -121,14 +124,16 @@ class DiningGroom(LivingGroom):
 class CustomGroom(LivingGroom):
 
     def __init__(self, area, label, color):
-        super().__init__(area, label=label)
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(CustomGroom,self).__init__(area, label=label)
         self.fill_color = color
 
 
 class KitchenGroom(LivingGroom):
 
     def __init__(self, area):
-        super().__init__(area, label="Kitchen")
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(KitchenGroom,self).__init__(area, label="Kitchen")
         self.fill_color = "fff2cc"
 
     def tree_weight(self, weights):
@@ -148,7 +153,8 @@ class KitchenGroom(LivingGroom):
 class HallwayGroom(Groom):
 
     def __init__(self):
-        super().__init__(0, "")
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(HallwayGroom,self).__init__(0, "")
 
     def tree_weight(self, weights):
         return weights.HallwayGroom_weight
@@ -180,7 +186,8 @@ class HallwayGroom(Groom):
 class BedGroom(Groom):
 
     def __init__(self, area):
-        super().__init__(area, "Bedroom")
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(BedGroom,self).__init__(area, "Bedroom")
         self.fill_color = "d9ead3"
 
     def tree_score(self, actual_room, weights):
@@ -254,7 +261,8 @@ class BedGroom(Groom):
 class BathGroom(Groom):
 
     def __init__(self, area):
-        super().__init__(area, "Bath")
+        # https://stackoverflow.com/questions/38963018/typeerror-super-takes-at-least-1-argument-0-given-error-is-specific-to-any
+        super(BathGroom,self).__init__(area, "Bath")
         self.fill_color = "cfe2f3"
 
     def tree_score(self, actual_room, weights):
@@ -274,8 +282,3 @@ class BathGroom(Groom):
         if door_counter == 0:
             return 0
         return multiplier / door_counter
-
-
-
-
-

@@ -48,6 +48,9 @@ class SvgRenderer(object):
         for room in self.floorplan.rooms:
             self.render_room_label(room)
 
+        for room in self.floorplan.rooms:
+            self.render_dimension_lines(room)
+
         self.drawing.saveas(filename, pretty=True)
 
 
@@ -80,6 +83,28 @@ class SvgRenderer(object):
                 self.mark_point(point, color=svgwrite.rgb(255, 255, 0))
 
         # self.render_door(edge, DoorFactory.interior_door(0.5, -1))
+
+    def render_dimension_lines(self, room):
+        for edge in room.edges:
+            p0, p1 = [self.scale_point(p) for p in edge.cartesian_points]
+            x0, y0 = p0
+            x1, y1 = p1
+            x, y = self.scale_point(room.center)
+            c = np.array([x,y])
+            # direction to shift the line
+            e = p1-p0
+            n = np.array([-e[1], e[0]])
+            if np.dot(n, c-p0)<0:
+                n = -n
+            / np.linalg.norm(rayDirection)
+
+            dx = xc - p0[0]
+
+            self.group.add(self.drawing.line(p0, p1, **{
+                "stroke": "#595959",
+                "stroke-width": self.rparams.room_stroke_width,
+                "stroke-linecap": "round"
+            }))
 
     def render_room_label(self, room):
         # print(f"I am looking at room {room.groom.label}")

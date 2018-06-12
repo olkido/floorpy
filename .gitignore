@@ -104,3 +104,4 @@ ENV/
 cherries
 the_real_out
 *.DS_Store
+static

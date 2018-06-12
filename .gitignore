@@ -105,3 +105,7 @@ cherries
 the_real_out
 *.DS_Store
 static
+core/__init__.py
+evaluator/__init__.py
+generator/__init__.py
+renderer/__init__.py

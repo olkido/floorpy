@@ -3,6 +3,7 @@ from generator.node import Node
 from generator.subdivide_tree_generator import *
 import copy
 from multiprocessing import Pool
+from core.edge import Orientation, Edge
 
 
 class GeneticTreeShaker(object):
@@ -116,6 +117,11 @@ class GeneticTreeShaker(object):
             candidate.order *= -1
         if random.random() < self.prob_orientation_mutates:
             candidate.orientation = candidate.orientation.negate()
+            # if candidate.orientation == Orientation.Vertical:
+            #     candidate.orientation = Orientation.Horizontal
+            # else:
+            #     candidate.orientation = Orientation.Vertical
+
         # if random.random() < self.prob_t_mutates:
         #     candidate.t += random.uniform(-self.t_mutation_magnitude, self.t_mutation_magnitude)
         if random.random() < self.prob_padding_mutates:

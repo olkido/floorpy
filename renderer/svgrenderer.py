@@ -6,12 +6,20 @@ from generator.groom import HallwayGroom
 from core.opening import Door, DoorFactory
 
 class RenderingParams(object):
-    def __init__(self, scaling=16, room_stroke_width=12, door_stroke_width_hinge_latch=12, door_stroke_width_hinge_endpoint=4, door_stroke_width_arc=2):
+    def __init__(self,
+                 scaling=16,
+                 room_stroke_width=12,
+                 door_stroke_width_hinge_latch=12,
+                 door_stroke_width_hinge_endpoint=4,
+                 door_stroke_width_arc=2,
+                 dimension_stroke_width=2,
+                 ):
         self.scaling = scaling
         self.room_stroke_width = room_stroke_width # room wall stroke width
         self.door_stroke_width_hinge_latch = door_stroke_width_hinge_latch
         self.door_stroke_width_hinge_endpoint = door_stroke_width_hinge_endpoint
         self.door_stroke_width_arc = door_stroke_width_arc
+        self.dimension_stroke_width = dimension_stroke_width
 
 from exporter.roomexporter import RoomExporter
 
@@ -23,6 +31,8 @@ class SvgRenderer(object):
         self.drawing = svgwrite.Drawing('out/output.svg', size=(width * rparams.scaling + 64, height * rparams.scaling + 64))
         self.group = svgwrite.container.Group(transform='translate(32,32)')
         self.drawing.add(self.group)
+        self.width = width
+        self.height = height
         self.exporter = RoomExporter(floorplan, self.rparams)
 
     def render(self, filename, show_edge_connections=False):
@@ -92,19 +102,58 @@ class SvgRenderer(object):
             x, y = self.scale_point(room.center)
             c = np.array([x,y])
             # direction to shift the line
-            e = p1-p0
+            e = np.array(p1)-np.array(p0)
+            e = e / np.linalg.norm(e)
             n = np.array([-e[1], e[0]])
             if np.dot(n, c-p0)<0:
                 n = -n
-            / np.linalg.norm(rayDirection)
-
-            dx = xc - p0[0]
-
+            # step inwards by a fixed amount (relative to scene size)
+            # also step "along" the edge to make sure that arrow endpoints don't
+            # land "inside" the thick room edge lines
+            step = 0.01*self.rparams.scaling* max(self.width, self.height)
+            step_along = self.rparams.room_stroke_width
+            print ("p0 = {}".format(p0))
+            print ("p1 = {}".format(p1))
+            print ("step = {}".format(step))
+            p0 = p0 + step_along * e + step *n
+            p1 = p1 - step_along * e+ step *n
+            # draw main line of dimension
             self.group.add(self.drawing.line(p0, p1, **{
                 "stroke": "#595959",
-                "stroke-width": self.rparams.room_stroke_width,
+                "stroke-width": self.rparams.dimension_stroke_width,
                 "stroke-linecap": "round"
             }))
+            arrow_angle = 30*np.pi/180
+            arrow_length = 0.005*self.rparams.scaling* max(self.width, self.height)
+            ca = np.cos(arrow_angle)
+            sa = np.sin(arrow_angle)
+            R = np.array([[ca,-sa],[sa,ca]])
+            Rt = np.array([[ca,sa],[-sa,ca]])
+            arr0 = arrow_length*np.matmul(R,e)
+            arr1 = arrow_length*np.matmul(Rt,e)
+            # draw arrow lines
+            self.group.add(self.drawing.line(p0, p0+arr0, **{
+                                             "stroke": "#595959",
+                                             "stroke-width": self.rparams.dimension_stroke_width,
+                                             "stroke-linecap": "round"
+                                             }))
+            self.group.add(self.drawing.line(p0, p0+arr1, **{
+                                             "stroke": "#595959",
+                                             "stroke-width": self.rparams.dimension_stroke_width,
+                                             "stroke-linecap": "round"
+                                             }))
+            self.group.add(self.drawing.line(p1, p1-arr0, **{
+                                             "stroke": "#595959",
+                                             "stroke-width": self.rparams.dimension_stroke_width,
+                                             "stroke-linecap": "round"
+                                             }))
+            self.group.add(self.drawing.line(p1, p1-arr1, **{
+                                             "stroke": "#595959",
+                                             "stroke-width": self.rparams.dimension_stroke_width,
+                                             "stroke-linecap": "round"
+                                             }))
+
+
 
     def render_room_label(self, room):
         # print(f"I am looking at room {room.groom.label}")

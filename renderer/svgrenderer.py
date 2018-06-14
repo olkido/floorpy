@@ -102,11 +102,8 @@ class SvgRenderer(object):
 
         dimension_lines = self.exporter.export_dimension_lines(room)
         for line in dimension_lines:
-            print('line: {}'.format(line))
             p0 = np.array(line[0:2])
             p1 = np.array(line[2:4])
-            print('p0: {}'.format(p0))
-            print('p1: {}'.format(p1))
             thickness = line[4]
             self.group.add(self.drawing.line(p0, p1, **{
                                              "stroke": "#595959",

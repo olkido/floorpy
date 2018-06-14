@@ -6,11 +6,11 @@ from core.opening import Door, DoorFactory
 from renderer.svgrenderer import RenderingParams
 
 class LineTypes:
-    RoomWall, Door = range(2)
+    RoomWall, Door, Dimension = range(3)
 
 class RoomExporter(object):
 
-    def __init__(self, floorplan, rparams=RenderingParams(), num_door_points = 5):
+    def __init__(self, floorplan, rparams=RenderingParams(100, 60), num_door_points = 5):
         self.rparams = rparams
         self.floorplan = floorplan
         self.num_door_points = num_door_points
@@ -24,15 +24,12 @@ class RoomExporter(object):
         line_labels = []
         for room in self.floorplan.rooms:
             # todo: return room rectangles
-            # self.render_room_fill(room)
             for edge in room.edges:
                 positive_groom = edge.positive.groom if edge.positive is not None else None
                 negative_groom = edge.negative.groom if edge.negative is not None else None
                 if type(positive_groom) is HallwayGroom and type(negative_groom) is HallwayGroom:
                     continue
                 p0, p1 = [self.scale_point(p) for p in edge.cartesian_points]
-                # todo: append p0, p1, edge linewidth = 12 to edges
-                # todo: add doors
                 line = np.append(p0,p1)
                 line = np.append(line,np.array(self.rparams.room_stroke_width))
                 lines.append(line)
@@ -43,11 +40,71 @@ class RoomExporter(object):
                     lines.extend(door_lines)
                     line_labels.extend([LineTypes.Door] * len(door_lines))
 
+            dimension_lines = self.export_dimension_lines(room)
+            lines.extend(dimension_lines)
+            line_labels.extend([LineTypes.Dimension] * len(dimension_lines))
+
 
         lines = np.array(lines)
         line_labels = np.array(line_labels)
         # todo: add room labels, add room rectangles
         return lines, line_labels
+
+
+    def export_dimension_lines(self, room):
+        lines = []
+        for edge in room.edges:
+            p0, p1 = [self.scale_point(p) for p in edge.cartesian_points]
+            x0, y0 = p0
+            x1, y1 = p1
+            x, y = self.scale_point(room.center)
+            c = np.array([x,y])
+            # direction to shift the line
+            e = np.array(p1)-np.array(p0)
+            e = e / np.linalg.norm(e)
+            n = np.array([-e[1], e[0]])
+            if np.dot(n, c-p0)<0:
+                n = -n
+            # step inwards by a fixed amount (relative to scene size)
+            # also step "along" the edge to make sure that arrow endpoints don't
+            # land "inside" the thick room edge lines
+            step = 0.01*self.rparams.scaling* max(self.rparams.width, self.rparams.height)
+            step_along = self.rparams.room_stroke_width
+            p0 = p0 + step_along * e + step *n
+            p1 = p1 - step_along * e+ step *n
+            # export main line of dimension
+            line = np.append(p0,p1)
+            line = np.append(line,np.array(self.rparams.dimension_stroke_width))
+            lines.append(line)
+            arrow_angle = 30*np.pi/180
+            arrow_length = 0.005*self.rparams.scaling* max(self.rparams.width, self.rparams.height)
+            ca = np.cos(arrow_angle)
+            sa = np.sin(arrow_angle)
+            R = np.array([[ca,-sa],[sa,ca]])
+            Rt = np.array([[ca,sa],[-sa,ca]])
+            arr0 = arrow_length*np.matmul(R,e)
+            arr1 = arrow_length*np.matmul(Rt,e)
+            # export arrow lines
+            line = np.append(p0,p0+arr0)
+            line = np.append(line,np.array(self.rparams.dimension_stroke_width))
+            lines.append(line)
+
+            line = np.append(p0,p0+arr1)
+            line = np.append(line,np.array(self.rparams.dimension_stroke_width))
+            lines.append(line)
+
+            line = np.append(p1, p1-arr0)
+            line = np.append(line,np.array(self.rparams.dimension_stroke_width))
+            lines.append(line)
+
+            line = np.append(p1, p1-arr1)
+            line = np.append(line,np.array(self.rparams.dimension_stroke_width))
+            lines.append(line)
+
+        return lines
+
+
+
 
     def export_door_points(self,edge,door):
         a, b = edge.radial_points(door.t, door.width * 0.5)

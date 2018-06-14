@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 def garbage_fire():
 
     fp = PopulationCentrifuge().create_perfect_floorplan()
-    renderer.svgrenderer.SvgRenderer(fp, 100, 60).render('out/output.svg')
+    renderer.svgrenderer.SvgRenderer(fp).render('out/output.svg')
     lines, labels = exporter.roomexporter.RoomExporter(fp).export_lines()
     print('-- Lines -- ')
     print(lines)

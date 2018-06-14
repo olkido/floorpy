@@ -87,7 +87,7 @@ class PopulationCentrifuge(object):
             filename,
         )
         print("Dumping plan to ", filename)
-        ren = renderer.svgrenderer.SvgRenderer(fp, width, height);
+        ren = renderer.svgrenderer.SvgRenderer(fp, renderer.svgrenderer.RenderingParams(width,height));
         ren.render(filename + '.svg')
 
 

@@ -109,3 +109,4 @@ core/__init__.py
 evaluator/__init__.py
 generator/__init__.py
 renderer/__init__.py
+generator/._tree_judge.py
